@@ -616,8 +616,17 @@ class OBOOntology(object):
             parents.append(self.term(id))
         return set(parents)
     # Ken
+    # Find the root of a given ontology
     def root(self):
-        return [t for t in self.terms() if self.parent_terms(t) == set([]) and self.child_terms(t)!=set([]) ]
+        try:
+            return [t for t in self.terms() if self.parent_terms(t) == set([]) and self.child_terms(t)!=set([])][0]
+        except:
+            raise("Can't find the root of the ontology. Please check the intergrity of the file!")
+
+    #  Check if  a term is the root term
+    def is_root(self, term):
+        return self.root() == self.term(term)
+
     def relations(self):
         """ Return a list of all relations in the ontology.
         """
@@ -644,7 +653,7 @@ class OBOOntology(object):
         return self.id2term[key]
     
     def has_key(self, key):
-        return self.id2tem.has_key(key)
+        return self.id2term.has_key(key)
 
     # Ken
     def isRoot(self, term):
@@ -654,7 +663,7 @@ class OBOOntology(object):
 
 
     def topology(self, term):
-        if self.isRoot(term):
+        if self.is_root(term):
             return  1.0
         num_children_parents= [self.child_terms(i).__len__() for i in list(self.climb_bf(term))]
         return  1.0/reduce(lambda x,y: x * y, num_children_parents)

@@ -16,6 +16,13 @@ from operator import itemgetter
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Path to pickle objects for traversing the ontology
+picklepath= os.path.expanduser('~/Desktop/HDO_data')
+
+filepath = os.path.join(picklepath, 'TermIndices.cpk')
+filepath_indices = os.path.join(picklepath, 'IndicesTerms.cpk')
+
+
 
 
 parser = argparse.ArgumentParser()
@@ -29,24 +36,19 @@ parser.add_argument("--similarities", "-s", help="File path to the text file whe
 
 args = parser.parse_args()
 
+# Create the ontology object
 obo = orangeonto.OBOOntology(file=args.file)
 
-picklepath= os.path.expanduser('~/Desktop/HDO_data')
-
-filepath = os.path.join(picklepath, 'TermIndices.cpk')
-filepath_indices = os.path.join(picklepath, 'IndicesTerms.cpk')
 
 
 
 # Find the root term of an ontology file
 #  Change should be determined automatically.
-ROOT = 'DOID:4'
+ROOT = obo.root().id
 
 
 
-def statisticsHDO():
-    print "The Statistics of the ontology "
-    print "Number of Terms = {}".format(len(obo.terms()))
+
 
 def numOfTermsFile():
     return  len(obo.terms())
@@ -54,6 +56,7 @@ def numOfTermsFile():
 
 # Create a dictionary of indices -> terms
 def createIndicesTerm(root):
+    # create a dictionary of  {0:'DOID:4', n:'DOID:xyz'}
     dict_bf = {}
     count=0
     dict_bf[count]=root
@@ -95,9 +98,28 @@ def loadIndexTerm(fpath=args.index_term):
 
 idx_term = createIndicesTerm(ROOT)
 
+
+
 term_idx = createTermIndices(idx_term)
 
 # print term_idx
+
+# Provide a brief summary of the ontology- show root and number of terms
+def summariseOntology():
+    print
+    print "="*80
+    print "Getting summary for the ontology located in {}".format(args.file)
+    print
+    print "Name of  root: [{}], the id of the root: [{}] ".format(obo.root().name, obo.root().id)
+    print "Number of terms: {}".format(numOfTermsFile())
+    print "Number of obsolete terms: {}".format(obsoleteTerms(obo).__len__())
+    print "Edge types  in the ontology are {}".format(obo.edge_types().__len__())
+    # print "Typedefs: {}".format(obo.typedefs())
+    # print "Number of obsolete terms: {}".format(len([i for i in obo.terms() if obo.term(i).obsolete=='true']))
+    print
+    print "="*80
+
+
 
 
 def mca (term1, term2):
@@ -179,41 +201,37 @@ def calcSimilarityCombinations():
 
 
 
-print obo.root()
+# print obo.root().id
+
+# print obo.topology('DOID:4')
+print obo.topology('DOID:4325')
+# print obo.topology('DOID:11341')
+
+def obsoleteTerms(onto):
+    lsObsoletes =[]
+    for term in  onto.terms():
+        if term.get_value('is_obsolete') != []:
+            lsObsoletes.append(term.id)
+    return  lsObsoletes
+
+
+
+# print obsoleteTerms(obo).__len__()
+summariseOntology()
 #
 # testSimCalc('DOID:4325', 'DOID:11341')
 
-
-# print obo.getGlobalPairwiseSimilarity('DOID:4325')
-
-
-# print calcGlobalSimilarity('DOID:10923')
-# count =0
-# for i in  calcGlobalSimilarity('DOID:14069'):
-#     print i
-#     count +=1
-#     if count == 100:
-#         break
-
-# # calcSimilarityCombinations()
-# globSim=calcGlobalSimilarity('DOID:14069')
-
-# print globSim
-# dfSim =pd.DataFrame(globSim, columns=['Disease_Pair', 'Similarity'])
-# dat1000=dfSim[:1000]
-#
-# dat1000['Similarity'].plot()
-#
-#
-#
-# plt.show()
-# # print dfSim.head(1000)
-
-# plt.hist(dfSim['Similarity'])
-
-# sbs.kdeplot(dfSim)
+# print mca('DOID:4325', 'DOID:11341')
 
 
-# print obo.term('DOID:14418')
 
-# print obo.super_terms('DOID:1437')
+
+# # DOID:9084
+# DOID:9092
+# DOID:9093
+# DOID:9103
+# DOID:9105
+# DOID:9109
+# DOID:9114
+# DOID:9115
+# DOID:9117
