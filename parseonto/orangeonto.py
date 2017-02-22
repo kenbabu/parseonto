@@ -615,7 +615,9 @@ class OBOOntology(object):
         for rel_type, id in self.parent_edges(term): #term.related_objects():
             parents.append(self.term(id))
         return set(parents)
-    
+    # Ken
+    def root(self):
+        return [t for t in self.terms() if self.parent_terms(t) == set([]) and self.child_terms(t)!=set([]) ]
     def relations(self):
         """ Return a list of all relations in the ontology.
         """
@@ -650,6 +652,7 @@ class OBOOntology(object):
 
     # Calculate the topological characteristics of a term
 
+
     def topology(self, term):
         if self.isRoot(term):
             return  1.0
@@ -667,6 +670,14 @@ class OBOOntology(object):
         return (self.topology(term), self.topology(other))
 
         # return zip([i.id for i in anc_term1], [i.id for i in anc_term2])
+
+    def getGlobalPairwiseSimilarity(self, term):
+        # for t in self.terms():
+        #     print self.mca(t.id, term)
+        return [self.mca(i.id, term) for i in self.terms() ]
+
+
+        # return len(self.terms())
 
     def climb_bf(self, term):
         queue = list(self.parent_terms(term))
