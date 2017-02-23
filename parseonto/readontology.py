@@ -111,7 +111,7 @@ def summariseOntology():
     print "Getting summary for the ontology located in {}".format(args.file)
     print
     print "Name of  root: [{}], the id of the root: [{}] ".format(obo.root().name, obo.root().id)
-    print "Number of terms: {}".format(numOfTermsFile())
+    print "Number of terms: {}".format(obo.terms().__len__())
     print "Number of obsolete terms: {}".format(obsoleteTerms(obo).__len__())
     print "Edge types  in the ontology are {}".format(obo.edge_types().__len__())
     # print "Typedefs: {}".format(obo.typedefs())
@@ -123,23 +123,46 @@ def summariseOntology():
 
 
 def mca (term1, term2):
+    if obo.is_root(term1):
+        return term1
+    if obo.is_root(term2):
+        return term2
+    # Get the obsolete terms
+    obsolete = obsoleteTerms(obo)
+    try:
+        assert term1 not in obsolete, "{} is  obsolete".format(term1)
+        assert term2 not in obsolete, "{} is  obsolete".format(term2)
+    except AssertionError as err:
+        print(err.message)
+        return
+
     anc_term1= [i.id for i in obo.super_terms(term1)]
     anc_term2= [i.id for i in obo.super_terms(term2)]
-
-    anc=  max([term_idx[i] for i in  list(set(anc_term1).intersection( anc_term2))])
+    anc=max([term_idx[i] for i in  list(set(anc_term1).intersection( anc_term2))])
 
     return idx_term[anc]
 
+
 def calcSimilarity(term1, term2):
+    start = time.clock()
+    MCA = mca(term1, term2)
+    if MCA is None:
+        return -1.0
+    if obo.is_root(MCA):
+        return 0.0
     try:
-        return float(-1* (math.log(obo.topology(mca(term1, term2)))))/max([-1*math.log(obo.topology(term1)),
-                                                                 -1*math.log(obo.topology(term2))])
-    except ValueError:
-        # print "Error: Common Ancestors undefined {0}\t{1}\t[NAN]".format(term1, term2 )
-        return None
-    except TypeError:
-        # print "TypeError {0}\t{1}\t[NAN]".format(term1, term2 )
-        return None
+        ICterm1= (-1.0* (math.log(obo.topology(term1))))
+        ICterm2= (-1.0* (math.log(obo.topology(term2))))
+        ICmca = (-1.0* (math.log(obo.topology(MCA))))
+        sim = ICmca/max([ICterm1, ICterm2])
+        end = time.clock()
+        print "Took {0} seconds to calculate similarity ".format((end-start)/1000 )
+        return sim
+    except ValueError as err:
+        print err.message
+
+
+
 
 #     Number of pairs in the ontology
 def genPairwise(lsTerms):
@@ -147,7 +170,6 @@ def genPairwise(lsTerms):
 
 # print mca('DOID:679', 'DOID:9771')
 
-# print calcSimilarity('DOID:679', 'DOID:971')
 
 # Calc similarity ebola and malaria
 def testSimCalc(term1, term2):
@@ -189,11 +211,10 @@ def calcSimilarityCombinations():
     with open(os.path.join(picklepath, args.similarities), "w") as simFile:
         count =0
         for i in combinations(loadTermIndex().values(), 2):
-            # ignore root
-            if not (i[0] == ROOT or i[1] == ROOT):
-                simFile.writelines("{0}\t{1}\t{2}\n".format(calcSimilarity(i[0],i[1]), i[0], i[1]))
-                count +=1
-                print i[0],i[1], calcSimilarity(i[0],i[1]), count
+
+            simFile.writelines("{0}\t{1}\t{2}\n".format( i[0], i[1], calcSimilarity(i[0],i[1])))
+            count +=1
+            print i[0],i[1], calcSimilarity(i[0],i[1]), count
 
     end = time.clock()
     print "Took {0} seconds to calculate similarities for {1} pairs ".format((end-start)/1000, count )
@@ -204,7 +225,7 @@ def calcSimilarityCombinations():
 # print obo.root().id
 
 # print obo.topology('DOID:4')
-print obo.topology('DOID:4325')
+# print obo.topology('DOID:4325')
 # print obo.topology('DOID:11341')
 
 def obsoleteTerms(onto):
@@ -217,13 +238,26 @@ def obsoleteTerms(onto):
 
 
 # print obsoleteTerms(obo).__len__()
-summariseOntology()
+# summariseOntology()
+
+print calcSimilarity('DOID:679', 'DOID:9771')
+
+
+
+
 #
 # testSimCalc('DOID:4325', 'DOID:11341')
 
-# print mca('DOID:4325', 'DOID:11341')
+# print mca('DOID:4325', 'DOID:0060405')
+#
+# print mca('DOID:7788', 'DOID:0060405')
+# #
+#
+# print max((-1 *math.log(obo.topology('DOID:7788'))), (-1*math.log(obo.topology('DOID:0060405'))))
+#
+# print math.log(100, 10) + math.log(100, 10)
 
-
+calcSimilarityCombinations()
 
 
 # # DOID:9084
