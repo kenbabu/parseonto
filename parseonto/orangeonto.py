@@ -661,7 +661,7 @@ class OBOOntology(object):
 
     # Calculate the topological characteristics of a term
 
-
+    # Kenneth added function
     def topology(self, term):
         if self.is_root(term):
             return  1.0
